@@ -193,11 +193,11 @@ void AIPlayer::think(color & c_piece, int & id_piece, int & dice) const{
             break;
 
         case 2:
-            //thinkFichaMasAdelantada(c_piece, id_piece, dice);
+            thinkFichaMasAdelantada(c_piece, id_piece, dice);
             break;
 
         case 3:
-            //thinkMejorOpcion(c_piece, id_piece, dice);
+            thinkMejorOpcion(c_piece, id_piece, dice);
             break;
     }
 
@@ -403,3 +403,108 @@ void AIPlayer::thinkAleatorioMasInteligente(color &c_piece, int &id_piece, int &
 }
 
 
+// TUTORIAL --> METODO THINK FICHA MAS ADELANTADA
+void AIPlayer::thinkFichaMasAdelantada(color &c_piece, int &id_piece, int &dice) const
+{
+    // Elijo el dado haciendo lo mismo que el jugador anterior.
+    thinkAleatorioMasInteligente(c_piece, id_piece, dice);
+    
+    // Tras llamar a esta función, ya tengo en dice el número de dado que quiero usar.
+    // Ahora, en vez de mover una ficha al azar, voy a mover (o a aplicar
+    // el dado especial a) la que esté más adelantada
+    // (equivalentemente, la más cercana a la meta).
+    int player = actual->getCurrentPlayerId();
+    
+    vector<tuple<color, int>> current_pieces = actual->getAvailablePieces(player, dice);
+    
+    int id_ficha_mas_adelantada = -1;
+    color col_ficha_mas_adelantada = none;
+    int min_distancia_meta = 9999;
+
+    for (int i = 0; i < current_pieces.size(); i++)
+    {
+        // distanceToGoal(color, id) devuelve la distancia a la meta de la ficha [id] del color que le indique.
+        color col = get<0>(current_pieces[i]);
+        int id = get<1>(current_pieces[i]);
+        int distancia_meta = actual->distanceToGoal(col, id);
+       
+        if (distancia_meta < min_distancia_meta)
+        {
+            min_distancia_meta = distancia_meta;
+            id_ficha_mas_adelantada = id;
+            col_ficha_mas_adelantada = col;
+        }
+    }
+
+    // Si no he encontrado ninguna ficha, paso turno.
+    if (id_ficha_mas_adelantada == -1)
+    {
+        id_piece = SKIP_TURN;
+        c_piece = actual->getCurrentColor(); // Le tengo que indicar mi color actual al pasar turno.
+    }
+
+    // En caso contrario, moveré la ficha más adelantada.
+    else
+    {
+        id_piece = id_ficha_mas_adelantada;
+        c_piece = col_ficha_mas_adelantada;
+    }
+}
+
+
+// TUTORIAL --> METODO THINK MEJOR OPCION
+void AIPlayer::thinkMejorOpcion(color &c_piece, int &id_piece, int &dice) const
+{
+    // Vamos a mirar todos los posibles movimientos del jugador actual accediendo a los hijos del estado actual.
+    // Cuando ya he recorrido todos los hijos, la función devuelve el estado actual. De esta forma puedo saber cuándo paro de iterar.
+    // Para ello, vamos a iterar sobre los hijos con la función de Parchis getChildren().
+    // Esta función devuelve un objeto de la clase ParchisBros, que es una estructura iterable sobre la que se pueden recorrer todos los hijos del estado sobre el que se llama.
+    
+    ParchisBros hijos = actual->getChildren();
+    
+    bool me_quedo_con_esta_accion = false;
+    
+    // La clase ParchisBros viene con un iterador muy útil y sencillo de usar.
+    // Al hacer begin() accedemos al primer hijo de la rama, y cada vez que hagamos ++it saltaremos al siguiente hijo.
+    // Comparando con el iterador end() podemos consultar cuándo hemos terminado de visitar los hijos.
+    // Voy a moverme a la casilla siempre con la que gane más energía, salvo que me encuentre con
+    // algún movimiento muy interesante, como comer fichas o llegar a la meta.
+    
+    int current_power = actual->getPowerBar(this->jugador).getPower();
+    
+    int max_power = -101; // Máxima ganancia de energía.
+    
+    for (ParchisBros::Iterator it = hijos.begin(); it != hijos.end() and !me_quedo_con_esta_accion; ++it)
+    {
+        Parchis siguiente_hijo = *it;
+        
+        // Si en el movimiento elegido comiera ficha, llegara a la meta o ganara, me quedo con esa acción.
+        // Termino el bucle en este caso.
+        
+        if (siguiente_hijo.isEatingMove() or (siguiente_hijo.isGoalMove()) or (siguiente_hijo.gameOver() and siguiente_hijo.getWinner() == this->jugador))
+        {
+            me_quedo_con_esta_accion = true;
+            c_piece = it.getMovedColor();
+            id_piece = it.getMovedPieceId();
+            dice = it.getMovedDiceValue();
+        }
+
+        // En caso contrario, me voy quedando con el que me dé más energía.
+        else{
+            
+            int new_power = siguiente_hijo.getPower(this->jugador);
+            
+            if (new_power - current_power > max_power){
+               
+                c_piece = it.getMovedColor();
+                id_piece = it.getMovedPieceId();
+                dice = it.getMovedDiceValue();
+                max_power = new_power - current_power;
+            }
+        }
+    }
+
+// Si he encontrado una acción que me interesa, la guardo en las variables pasadas por referencia.
+// (Ya lo he hecho antes, cuando les he asignado los valores con el iterador).
+
+}
