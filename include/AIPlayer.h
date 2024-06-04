@@ -4,11 +4,19 @@
 # include "Attributes.h"
 # include "Player.h"
 
+// CLASE AIPLAYER
 class AIPlayer: public Player{
+    
+
     protected:
-        //Id identificativo del jugador
+        
+        //Id identificador del jugador. Se puede usar dentro del think para seleccionar heurísticas
         const int id;
+   
+   
     public:
+        
+
         /**
          * @brief Constructor de un objeto AIPlayer
          * 
@@ -16,6 +24,7 @@ class AIPlayer: public Player{
          */
         inline AIPlayer(const string & name):Player(name), id(1){};
         
+
         /**
          * @brief Constructor de un objeto AIPlayer 
          * 
@@ -24,15 +33,19 @@ class AIPlayer: public Player{
          */
         inline AIPlayer(const string & name, const int id):Player(name), id(id){};
 
-        /**
-         * @brief Función que percibe el el parchís y al jugador actual.
+
+        /** IMPORTANTE (NO MODIFICAR)
+         * 
+         * @brief Función que percibe el parchís y al jugador actual.
          * Asigna el tablero en actual y el id del jugador.
          * 
          * @param p Instancia Parchis que se quiere percibir
          */
         inline virtual void perceive(Parchis &p){Player::perceive(p);}
 
-        /**
+
+        /** IMPORTANTE (NO MODIFICAR)
+         * 
          * @brief Función abstracta que define el movimiento devuelto por el jugador.
          * Llama a la función movePiece con el valor asignado a los parámetros pasados 
          * por referencia.
@@ -42,7 +55,9 @@ class AIPlayer: public Player{
          */
         virtual bool move();
         
-        /**
+
+        /** IMPORTANTE (Llamada al método PODA ALFA-BETA)
+         * 
          * @brief Función que se encarga de decidir el mejor movimiento posible a 
          * partir del estado actual del tablero. Asigna a las variables pasadas por
          * referencia el valor de color de ficha, id de ficha y dado del mejor movimiento.
@@ -53,6 +68,7 @@ class AIPlayer: public Player{
          */
         virtual void think(color & c_piece,  int & id_piece, int & dice) const;
 
+
         /**
          * @brief Método que determina si el player es inteligente (decide el mejor movimiento)
          * o no. True para AIPlayer.
@@ -62,6 +78,7 @@ class AIPlayer: public Player{
          */
         inline virtual bool canThink() const{return true;}
 
+
         /**
          * @brief Heurística de prueba para validar el algoritmo de búsqueda.
          * 
@@ -70,6 +87,7 @@ class AIPlayer: public Player{
          * @return double 
          */
         static double ValoracionTest(const Parchis &estado, int jugador);
+
 
         /**
          * @brief Propuesta de declaración de la función poda alfa-beta.
