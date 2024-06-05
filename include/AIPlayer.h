@@ -34,8 +34,7 @@ class AIPlayer: public Player{
         inline AIPlayer(const string & name, const int id):Player(name), id(id){};
 
 
-        /** IMPORTANTE (NO MODIFICAR)
-         * 
+        /**  
          * @brief Función que percibe el parchís y al jugador actual.
          * Asigna el tablero en actual y el id del jugador.
          * 
@@ -44,8 +43,7 @@ class AIPlayer: public Player{
         inline virtual void perceive(Parchis &p){Player::perceive(p);}
 
 
-        /** IMPORTANTE (NO MODIFICAR)
-         * 
+        /** 
          * @brief Función abstracta que define el movimiento devuelto por el jugador.
          * Llama a la función movePiece con el valor asignado a los parámetros pasados 
          * por referencia.
@@ -56,8 +54,7 @@ class AIPlayer: public Player{
         virtual bool move();
         
 
-        /** IMPORTANTE (Llamada al método PODA ALFA-BETA)
-         * 
+        /**  
          * @brief Función que se encarga de decidir el mejor movimiento posible a 
          * partir del estado actual del tablero. Asigna a las variables pasadas por
          * referencia el valor de color de ficha, id de ficha y dado del mejor movimiento.
@@ -70,9 +67,51 @@ class AIPlayer: public Player{
 
 
         // MÉTODOS TUTORIAL
+
+        /** 
+         * @brief Función que se encarga de implementar la misma funcionalidad que el think.
+         * 
+         * @param c_piece Color de la ficha
+         * @param id_piece Id de la ficha
+         * @param dice Número de dado
+         */
         void thinkAleatorio(color &c_piece, int &id_piece, int &dice) const;
+
+
+        /** 
+         * @brief Función que se encarga de buscar para qué dados del jugador se puede mover al 
+         * menos una ficha. Elegimos aletoriamente para qué dados del jugador se puede mover al
+         * menos una ficha. Solo pasaremos turno cuando no se pueda mover ninguna ficha para 
+         * ninguno de los dados disponibles.
+         * 
+         * @param c_piece Color de la ficha
+         * @param id_piece Id de la ficha
+         * @param dice Número de dado
+         */
         void thinkAleatorioMasInteligente(color &c_piece, int &id_piece, int &dice) const;
+
+
+        /**
+         * @brief Función que se encarga de mover la ficha más adelantada, teniendo en cuenta la
+         * distancia entre casillas con el objetivo de llevarla antes a la meta. Se pasa turno si
+         * no hubiera ninguna ficha que tenga esta opción.
+         * 
+         * @param c_piece Color de la ficha
+         * @param id_piece Id de la ficha
+         * @param dice Número de dado
+         */
         void thinkFichaMasAdelantada(color &c_piece, int &id_piece, int &dice) const;
+
+
+        /** 
+         * @brief Función que se encarga de decidir el mejor movimiento posible en función de si 
+         * la acción a realizar es comer, llegar a meta o ganar la partida. Si no se cumple alguna
+         * de esa condición, me quedo con la que mayor valor de energía obtenga.
+         * 
+         * @param c_piece Color de la ficha
+         * @param id_piece Id de la ficha
+         * @param dice Número de dado
+         */
         void thinkMejorOpcion(color &c_piece, int &id_piece, int &dice) const;
 
 
@@ -87,7 +126,7 @@ class AIPlayer: public Player{
 
 
         /**
-         * @brief Heurística de prueba para validar el algoritmo de búsqueda.
+         * @brief Heurística de prueba para validar el algoritmo de búsqueda
          * 
          * @param estado Instancia de Parchis con el estado actual de la partida.
          * @param jugador Id del jugador actual (0 o 1)
@@ -97,9 +136,30 @@ class AIPlayer: public Player{
 
 
         /**
-         * @brief Propuesta de declaración de la función poda alfa-beta.
-         * La propuesta es solo sugerencia, los parámetros de la declaración podrían variar.
+         * @brief 1 Heurística 
+         * 
+         * @param estado Instancia de Parchis con el estado actual de la partida.
+         * @param jugador Id del jugador actual (0 o 1)
+         * @return double 
          */
-        //double Poda_AlfaBeta(const Parchis &actual, int jugador, int profundidad, int profundidad_max, color &c_piece, int &id_piece, int &dice, double alpha, double beta, double (*heuristic)(const Parchis &, int)) const;
+        static double MiValoracion1(const Parchis &estado, int jugador);
+
+
+        /**
+         * @brief Método de la poda alfa-beta
+         * 
+         * @param actual Instancia constante y por referencia de la clase Parchis
+         * @param jugador Identificador del jugador
+         * @param profundidad Nivel de la profundidad
+         * @param profundidad_max Nivel de profundidad máxima
+         * @param c_piece Color de la ficha
+         * @param id_piece Identificador de la ficha
+         * @param dice Numero de dado
+         * @param alpha Elemento fundamental para la poda empleado en nodos max
+         * @param beta Elemento fundamental para la poda empleado en nodos min
+         * @param heuristic Una funcion que toma una referencia constante de Parchis y un entero y devuelve un double
+         * @return double
+         */
+        double Poda_AlfaBeta(const Parchis &actual, int jugador, int profundidad, int profundidad_max, color &c_piece, int &id_piece, int &dice, double alpha, double beta, double (*heuristic)(const Parchis &, int)) const;
 };
 #endif
