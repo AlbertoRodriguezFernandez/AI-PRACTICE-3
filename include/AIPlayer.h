@@ -146,6 +146,16 @@ class AIPlayer: public Player{
 
 
         /**
+         * @brief 2 Heurística 
+         * 
+         * @param estado Instancia de Parchis con el estado actual de la partida.
+         * @param jugador Id del jugador actual (0 o 1)
+         * @return double 
+         */
+        static double MiValoracion2(const Parchis &estado, int jugador);
+
+
+        /**
          * @brief Método de la poda alfa-beta
          * 
          * @param actual Instancia constante y por referencia de la clase Parchis

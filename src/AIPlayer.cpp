@@ -105,28 +105,450 @@ double AIPlayer::ValoracionTest(const Parchis &estado, int jugador)
 // ---TODO: MI HEURÍSTICA 1
 double AIPlayer::MiValoracion1(const Parchis &estado, int jugador) {
 
+    // Heurística 1
+
+    /*
+    IDEAS MEJORA HEURÍSTICA
+
+        * DISTANCIA META
+        * DADO ESPECIAL
+        * FUNCIONES PUNTO 5 DEL GUIÓN 
+    */
+
+    int ganador = estado.getWinner();
+    int oponente = (jugador+1) % 2;
+
+    // Si hay un ganador, devuelvo más/menos infinito, según si he ganado yo o el oponente.
+    if (ganador == jugador)
+    {
+        return gana;
+    }
+    else if (ganador == oponente)
+    {
+        return pierde;
+    }
+    else
+    {
+        // Colores que juega mi jugador y colores del oponente
+        vector<color> my_colors = estado.getPlayerColors(jugador);
+        vector<color> op_colors = estado.getPlayerColors(oponente);
+
+        // Recorro todas las fichas de mi jugador
+        int puntuacion_jugador = 0;
+
+        // Recorro colores de mi jugador.
+        for (int i = 0; i < my_colors.size(); i++)
+        {
+            color c = my_colors[i];
+
+            // Recorro las fichas de ese color.
+            for (int j = 0; j < num_pieces; j++)
+            {
+                
+                // Valoro positivamente que la ficha esté en casilla segura 
+                if (estado.isSafePiece(c, j)) {
+                   
+                    puntuacion_jugador++;
+                } 
+                
+                 // Valoro positivamente que la ficha esté en meta
+                if (estado.getBoard().getPiece(c, j).get_box().type == goal) {
+                    
+                    puntuacion_jugador += 5;
+                }
+
+                // Valoro negativamente si la ficha esta en casa
+                if (estado.getBoard().getPiece(c, j).get_box().type == home) {
+
+                    puntuacion_jugador -= 5;
+                }
+
+                // Valoro positivamente si la ficha esta en pasillo final
+                if (estado.getBoard().getPiece(c, j).get_box().type == final_queue) {
+
+                    puntuacion_jugador += 4;
+                }
+
+                // Valoro positivamente si el movimiento fue para comer 
+                if (estado.isEatingMove()) {
+
+                    puntuacion_jugador++;
+                } 
+
+                // Valoro positivamente si el movimiento fue para llegar a meta
+                if (estado.isGoalMove()) {
+
+                    puntuacion_jugador++;
+                }
+
+                // Valoro positivamente si el numero de casillas en meta es >= 1
+                if (estado.piecesAtGoal(c) >= 1) {
+
+                    puntuacion_jugador += 7;
+                }
+
+                // Valoro negativamente si el numero de casillas en meta es >= 1
+                if (estado.piecesAtHome(c) >= 1) {
+
+                    puntuacion_jugador -= 7;
+                }
+
+                // Acciones dado especial
+                if (estado.getPowerBar(j).getPower() >= 0 && estado.getPowerBar(j).getPower() < 50) {
+
+                    puntuacion_jugador += 10;
+                }
+
+                if ((estado.getPowerBar(j).getPower() >= 50 && estado.getPowerBar(j).getPower() < 60) or 
+                    (estado.getPowerBar(j).getPower() >= 70 && estado.getPowerBar(j).getPower() < 75)) {
+
+                    puntuacion_jugador += 12;
+                }
+
+                if (estado.getPowerBar(j).getPower() >= 60 && estado.getPowerBar(j).getPower() < 65) {
+
+                    puntuacion_jugador -= 14;
+                }
+
+                if (estado.getPowerBar(j).getPower() >= 65 && estado.getPowerBar(j).getPower() < 70) {
+
+                    puntuacion_jugador += 16;
+                }
+
+                if (estado.getPowerBar(j).getPower() >= 75 && estado.getPowerBar(j).getPower() < 80) {
+
+                    puntuacion_jugador += 18;
+                }
+
+                if (estado.getPowerBar(j).getPower() >= 80 && estado.getPowerBar(j).getPower() < 85) {
+
+                    puntuacion_jugador -= 20;
+                }
+
+                if (estado.getPowerBar(j).getPower() >= 85 && estado.getPowerBar(j).getPower() < 90) {
+
+                    puntuacion_jugador += 22;
+                }
+
+                if (estado.getPowerBar(j).getPower() >= 90 && estado.getPowerBar(j).getPower() < 95) {
+
+                    puntuacion_jugador -= 24;
+                }
+
+                if (estado.getPowerBar(j).getPower() >= 95 && estado.getPowerBar(j).getPower() < 100) {
+
+                    puntuacion_jugador += 26;
+                }
+
+                if (estado.getPowerBar(j).getPower() >= 100) {
+
+                    puntuacion_jugador -= 28;
+                }
+
+                // Valoro positiva o negativamente el comer fichas
+                tuple<color, int, int> last_action = estado.getLastAction();       
+
+                switch(get<0>(last_action)){
+                    
+                    case red:
+
+                    case yellow:
+
+                        if(estado.eatenPiece().first == blue or estado.eatenPiece().first == green){
+                                
+                                if (estado.isGoalMove()) {
+
+                                    puntuacion_jugador += 50;
+
+                                } else {
+
+                                    puntuacion_jugador += 20;
+                                }
+                                
+                        } else {
+                            
+                            if(estado.eatenPiece().first != none){
+                                
+                                puntuacion_jugador -= 20;
+                            
+                            } else if (estado.isGoalMove()) {
+
+                                puntuacion_jugador += 40;
+
+                            } else {
+
+                                puntuacion_jugador += 10;
+                            }
+
+                        }
+
+                        break;
+                    
+                    case blue:
+
+                    case green:
+
+                        if(estado.eatenPiece().first == red or estado.eatenPiece().first == yellow){
+                                
+                                if (estado.isGoalMove()) {
+
+                                    puntuacion_jugador += 50;
+
+                                } else {
+
+                                    puntuacion_jugador += 20;
+                                }
+                                
+                        } else {
+                            
+                            if(estado.eatenPiece().first != none){
+                                
+                                puntuacion_jugador -= 20;
+                            
+                            } else if (estado.isGoalMove()) {
+
+                                puntuacion_jugador += 40;
+
+                            } else {
+
+                                puntuacion_jugador += 10;
+                            }
+
+                        }
+                        
+                        break;
+
+                    case none:
+                        break;
+                }
+
+                // Distancia
+                puntuacion_jugador += (72-estado.distanceToGoal(c,j));
+            }
+        }            
 
 
+
+
+
+
+        // Recorro todas las fichas del oponente
+        int puntuacion_oponente = 0;
+
+        // Recorro colores del oponente.
+        for (int i = 0; i < op_colors.size(); i++)
+        {
+            color c = op_colors[i];
+
+            // Recorro las fichas de ese color.
+            for (int j = 0; j < num_pieces; j++)
+            {
+
+                // Valoro negativamente que la ficha esté en casilla segura 
+                if (estado.isSafePiece(c, j)) {
+                    
+                    puntuacion_oponente++;
+                } 
+                
+                // Valoro negativamente que la ficha esté en meta
+                if (estado.getBoard().getPiece(c, j).get_box().type == goal) {
+                    
+                    puntuacion_oponente += 5;
+                }
+
+                // Valoro negativamente si la ficha esta en casa
+                if (estado.getBoard().getPiece(c, j).get_box().type == home) {
+
+                    puntuacion_oponente -= 5;
+                }
+
+                // Valoro positivamente si la ficha esta en pasillo final
+                if (estado.getBoard().getPiece(c, j).get_box().type == final_queue) {
+
+                    puntuacion_oponente += 4;
+                }
+
+                // Valoro negativamente si el movimiento fue para comer 
+                if (estado.isEatingMove()) {
+
+                    puntuacion_oponente++;
+                } 
+
+                // Valoro negativamente si el movimiento fue para llegar a meta
+                if (estado.isGoalMove()) {
+
+                    puntuacion_oponente++;
+                }
+
+                // Valoro negativamente si el numero de casillas en meta es >= 1
+                if (estado.piecesAtGoal(c) >= 1) {
+
+                    puntuacion_oponente += 7;
+                }
+
+                // Valoro negativamente si el numero de casillas en meta es >= 1
+                if (estado.piecesAtHome(c) >= 1) {
+
+                    puntuacion_oponente -= 7;
+                }
+
+                // Acciones dado especial
+                if (estado.getPowerBar(j).getPower() >= 0 && estado.getPowerBar(j).getPower() < 50) {
+
+                    puntuacion_oponente += 10;
+                }
+
+                if ((estado.getPowerBar(j).getPower() >= 50 && estado.getPowerBar(j).getPower() < 60) or
+                    (estado.getPowerBar(j).getPower() >= 70 && estado.getPowerBar(j).getPower() < 75)) {
+
+                    puntuacion_oponente += 12;
+                }
+
+                if (estado.getPowerBar(j).getPower() >= 60 && estado.getPowerBar(j).getPower() < 65) {
+
+                    puntuacion_oponente -= 14;
+                }
+
+                if (estado.getPowerBar(j).getPower() >= 65 && estado.getPowerBar(j).getPower() < 70) {
+
+                    puntuacion_oponente += 16;
+                }
+
+                if (estado.getPowerBar(j).getPower() >= 75 && estado.getPowerBar(j).getPower() < 80) {
+
+                    puntuacion_oponente += 18;
+                }
+
+                if (estado.getPowerBar(j).getPower() >= 80 && estado.getPowerBar(j).getPower() < 85) {
+
+                    puntuacion_oponente -= 20;
+                }
+
+                if (estado.getPowerBar(j).getPower() >= 85 && estado.getPowerBar(j).getPower() < 90) {
+
+                    puntuacion_oponente += 22;
+                }
+
+                if (estado.getPowerBar(j).getPower() >= 90 && estado.getPowerBar(j).getPower() < 95) {
+
+                    puntuacion_oponente -= 24;
+                }
+
+                if (estado.getPowerBar(j).getPower() >= 95 && estado.getPowerBar(j).getPower() < 100) {
+
+                    puntuacion_oponente += 26;
+                }
+
+                if (estado.getPowerBar(j).getPower() >= 100) {
+
+                    puntuacion_oponente -= 28;
+                }
+
+                // Valoro positiva o negativamente el comer fichas
+                tuple<color, int, int> last_action = estado.getLastAction();       
+
+                switch(get<0>(last_action)){
+                    
+                    case red:
+
+                    case yellow:
+
+                        if(estado.eatenPiece().first == blue or estado.eatenPiece().first == green){
+                                
+                                if (estado.isGoalMove()) {
+
+                                    puntuacion_oponente += 50;
+
+                                } else {
+
+                                    puntuacion_oponente += 20;
+                                }
+                                
+                        } else {
+                            
+                            if(estado.eatenPiece().first != none){
+                                
+                                puntuacion_oponente -= 20;
+                            
+                            } else if (estado.isGoalMove()) {
+
+                                puntuacion_oponente += 40;
+
+                            } else {
+
+                                puntuacion_oponente += 10;
+                            }
+
+                        }
+
+                        break;
+                    
+                    case blue:
+
+                    case green:
+
+                        if(estado.eatenPiece().first == red or estado.eatenPiece().first == yellow){
+                                
+                                if (estado.isGoalMove()) {
+
+                                    puntuacion_oponente += 50;
+
+                                } else {
+
+                                    puntuacion_oponente += 20;
+                                }
+                                
+                        } else {
+                            
+                            if(estado.eatenPiece().first != none){
+                                
+                                puntuacion_oponente -= 20;
+                            
+                            } else if (estado.isGoalMove()) {
+
+                                puntuacion_oponente += 40;
+
+                            } else {
+
+                                puntuacion_oponente += 10;
+                            }
+
+                        }
+                        
+                        break;
+
+                    case none:
+                        break;
+                }
+
+                // Distancia
+                puntuacion_oponente += (72-estado.distanceToGoal(c,j));
+
+            }
+        }
+
+
+        // Devuelvo la puntuación de mi jugador menos la puntuación del oponente.
+        return puntuacion_jugador - puntuacion_oponente;
+    }
 }
+
+
+// ---POSIBLE TODO
+double AIPlayer::MiValoracion2(const Parchis &estado, int jugador) {}
 
 
 // ---TODO: ALGORITMO DE BÚSQUEDA
 double AIPlayer::Poda_AlfaBeta(const Parchis &actual, int jugador, int profundidad, int profundidad_max, color &c_piece, int &id_piece, int &dice, double alpha, double beta, double (*heuristic)(const Parchis &, int)) const {
 
-    // Controlar que pasa si llegamos a la profundidad maxima
-    if (profundidad == profundidad_max) {
+    // Controlar que pasa si llegamos a la profundidad maxima o ha terminado el juego
+    if (profundidad == profundidad_max || actual.gameOver()) {
         
-        return ValoracionTest(actual, jugador);
+        return heuristic(actual, jugador);
     }
 
     ParchisBros hijos(actual);
    
-    // Controlar que pasa si no hay movimientos posibles
-    if (hijos.begin() == hijos.end()) { 
-        
-        return ValoracionTest(actual, jugador);
-    }
-
     // Sacar jugador en el que estamos
     int currentPlayerId = actual.getCurrentPlayerId();
     bool isMaxNode = (currentPlayerId == jugador);
@@ -143,7 +565,7 @@ double AIPlayer::Poda_AlfaBeta(const Parchis &actual, int jugador, int profundid
             int temp_id_piece;
             int temp_dice;
             
-            double eval = Poda_AlfaBeta(hijo, jugador, profundidad + 1, profundidad_max, temp_c_piece, temp_id_piece, temp_dice, alpha, beta, ValoracionTest);
+            double eval = Poda_AlfaBeta(hijo, jugador, profundidad + 1, profundidad_max, temp_c_piece, temp_id_piece, temp_dice, alpha, beta, heuristic);
             
             if (eval > maxEval) {
                 
@@ -179,7 +601,7 @@ double AIPlayer::Poda_AlfaBeta(const Parchis &actual, int jugador, int profundid
             int temp_id_piece;
             int temp_dice;
             
-            double eval = Poda_AlfaBeta(hijo, jugador, profundidad + 1, profundidad_max, temp_c_piece, temp_id_piece, temp_dice, alpha, beta, ValoracionTest);
+            double eval = Poda_AlfaBeta(hijo, jugador, profundidad + 1, profundidad_max, temp_c_piece, temp_id_piece, temp_dice, alpha, beta, heuristic);
             
             if (eval < minEval) {
                 
@@ -476,91 +898,9 @@ void AIPlayer::thinkMejorOpcion(color &c_piece, int &id_piece, int &dice) const
 }
 
 
-// ---TODO: THINK
+// THINK
 void AIPlayer::think(color & c_piece, int & id_piece, int & dice) const{
     
-    /*
-
-    OBJETIVO: 
-    
-        Asignar a las variables c_piece, id_piece, dice (pasadas por referencia) los valores,respectivamente, de:
-        
-        - color de ficha a mover: yellow, blue, red, green y none
-        - identificador de la ficha que se va a mover: 0, 1, 2 y SKIP_TURN
-        - valor del dado con el que se va a mover la ficha: 1, 2, 4, 5, 6, 10, 20 y power (dado especial)
-
-    TAREAS:
-        
-        1. Algoritmo de búsqueda
-        2. Heurística
-
-    CONSIDERACIONES GUION
-
-        - En primer lugar, va a ser necesario realizar una búsqueda en profundidad partiendo del estado actual 
-        del juego. En consecuencia, para cada nodo se hace necesario obtener todos los posibles tableros a los 
-        que se podría pasar, con cada uno de los posibles movimientos. Para ello, se ha implementado la clase
-        ParchisBros que se encarga de la generación de los nodos hijos posibles a partir de un estado
-        actual del parchis. Esta clase incluye un iterador que se usará para ir recorriendo los nodos hijos
-        del nodo actual. Dado que desde un punto de vista estratégico, en muchas ocasiones un valor de
-        dado mayor puede suponer una mayor ventaja, el operador++ del iterador se ha implementado
-        recorriendo los hijos en orden descendente del dado.
-
-        - En segundo lugar, es importante destacar que en el juego propuesto un turno se corresponde
-        con un único movimiento de ficha, independientemente de que ese movimiento sea repetido
-        por el mismo jugador tras sacar un 6, que sea un movimiento de contarse 10 o 20 tras llegar a la
-        meta o comer, o que sea la acción que se ejecute mediante un dado especial. En consecuencia,
-        como sucesor de un nodo MÁX podríamos encontrarnos de nuevo otro nodo MÁX (lo mismo
-        para los MÍN). Por tanto debemos tener en cuenta que la secuencia de nodos no va a ir
-        alternándose necesariamente en cada nivel. Tras sacar un 6 como nodo MÁX bajaríamos a un
-        nuevo nodo MÁX, con 1 más de profundidad. Igualmente, tras comer ficha bajaríamos a un
-        nuevo nodo del mismo tipo, en el que únicamente tendremos que elegir de entre nuestras
-        posibles fichas con cuál contarnos 20. En cualquier caso, en todo momento podremos saber si
-        somos un nodo MÁX o MIN, ya que conocemos el jugador que llama a la heurística y las
-        funciones como getCurrentPlayerId, de la clase Parchis, nos indican a qué jugador le toca
-        mover en cada turno. Recordemos que un nodo debería ser MÁX cuando el jugador que mueve
-        es el que llamó al algoritmo de búsqueda.
-
-        - En tercer lugar, puede que el algoritmo sea muy lento inicialmente por los dados pero luego al 
-        quedarle menos y al tener menos opciones por mover irá pensando más rápido.
-
-        - En cuarto lugar, mirar bien las clases y métodos de la sección 5 del guión.
-        
-    GUIÓN
-
-        // El id de mi jugador actual.
-        int player = actual->getCurrentPlayerId();
-
-        // Vector que almacenará los dados que se pueden usar para el movimiento
-        vector<int> current_dices;
-
-        // Vector que almacenará los ids de las fichas que se pueden mover para el dado elegido.
-        vector<tuple<color, int>> current_pieces;
-
-        // Se obtiene el vector de dados que se pueden usar para el movimiento
-        current_dices = actual->getAvailableNormalDices(player);
-
-        // Elijo un dado de forma aleatoria.
-        dice = current_dices[rand() % current_dices.size()];
-
-        // Se obtiene el vector de fichas que se pueden mover para el dado elegido
-        current_pieces = actual->getAvailablePieces(player, dice);
-
-        // Si tengo fichas para el dado elegido muevo una al azar.
-        if (current_pieces.size() > 0)
-        {
-            int random_id = rand() % current_pieces.size();
-            id_piece = get<1>(current_pieces[random_id]); // get<i>(tuple<...>) me devuelve el i-ésimo
-            c_piece = get<0>(current_pieces[random_id]);  // elemento de la tupla
-        }
-        else
-        {
-            // Si no tengo fichas para el dado elegido, pasa turno (la macro SKIP_TURN me permite no mover).
-            id_piece = SKIP_TURN;
-            c_piece = actual->getCurrentColor(); // Le tengo que indicar mi color actual al pasar turno.
-        }
-
-    */
-
     double valor; // Almacena el valor con el que se etiqueta el estado tras el proceso de busqueda
     double alpha = menosinf, beta = masinf; // Cotas iniciales de la poda AlfaBeta
 
@@ -580,7 +920,7 @@ void AIPlayer::think(color & c_piece, int & id_piece, int & dice) const{
             valor = Poda_AlfaBeta(*actual, jugador, 0, PROFUNDIDAD_ALFABETA, c_piece, id_piece, dice, alpha, beta, MiValoracion1);
             break;
 
-        case 2:
+        case 2: 
             valor = Poda_AlfaBeta(*actual, jugador, 0, PROFUNDIDAD_ALFABETA, c_piece, id_piece, dice, alpha, beta, MiValoracion2);
             break;
 
