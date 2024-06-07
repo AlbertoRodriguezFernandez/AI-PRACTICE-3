@@ -125,6 +125,9 @@ class AIPlayer: public Player{
         inline virtual bool canThink() const{return true;}
 
 
+        ///////////////////////// HEURÍSTICAS /////////////////////////
+
+
         /**
          * @brief Heurística de prueba para validar el algoritmo de búsqueda
          * 
@@ -136,7 +139,7 @@ class AIPlayer: public Player{
 
         
         /**
-         * @brief Método que calcula la puntuación de cada color
+         * @brief Método que calcula la puntuación de cada color empleado para la heurística 1
          * 
          * @param estado Instancia de Parchis con el estado actual de la partida.
          * @param jugador Id del jugador actual (0 o 1)
@@ -146,7 +149,7 @@ class AIPlayer: public Player{
 
 
         /**
-         * @brief Método que calcula la puntuación de cada jugador
+         * @brief Método que calcula la puntuación de cada jugador empleado para la heurística 1
          * 
          * @param estado Instancia de Parchis con el estado actual de la partida.
          * @param jugador Id del jugador actual (0 o 1)
@@ -166,13 +169,16 @@ class AIPlayer: public Player{
 
 
         /**
-         * @brief 2 Heurística 
+         * @brief 2 Heurística (peor análisis) 
          * 
          * @param estado Instancia de Parchis con el estado actual de la partida.
          * @param jugador Id del jugador actual (0 o 1)
          * @return double 
          */
         static double MiValoracion2(const Parchis &estado, int jugador);
+
+
+        ///////////////////////// ALGORITMO DE BÚSQUEDA /////////////////////////
 
 
         /**

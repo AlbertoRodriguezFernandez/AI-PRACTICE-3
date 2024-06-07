@@ -106,6 +106,7 @@ double AIPlayer::ValoracionTest(const Parchis &estado, int jugador)
 double AIPlayer::Puntos_Color(const Parchis &estado, color c){
 
     double puntuacion = 0;
+    const int NUM_CASILLAS_TOTALES = 72;
 
     
     // Fichas en la meta (mayor puntuación cuanto más tenga)
@@ -122,11 +123,11 @@ double AIPlayer::Puntos_Color(const Parchis &estado, color c){
 
     } else if (fichas_meta == 2) {
 
-        meta = 35;
+        meta = 40;
 
     } else {
 
-        meta = 40;
+        meta = 50;
     }
 
 
@@ -140,15 +141,15 @@ double AIPlayer::Puntos_Color(const Parchis &estado, color c){
     
     } else if (fichas_casa == 1) {
 
-        casa = 30;
+        casa = 20;
 
     } else if (fichas_casa == 2) {
 
-        casa = 35;
+        casa = 40;
 
     } else {
 
-        casa = 40;
+        casa = 60;
     }
 
 
@@ -157,7 +158,7 @@ double AIPlayer::Puntos_Color(const Parchis &estado, color c){
 
     for(int i = 0; i < 3; i++){ // Tenemos 3 piezas
 
-        distancia_meta += 100 - estado.distanceToGoal(c,i);
+        distancia_meta += NUM_CASILLAS_TOTALES - estado.distanceToGoal(c,i);
     }
 
 
@@ -172,7 +173,7 @@ double AIPlayer::Puntos_Color(const Parchis &estado, color c){
         }
     }
 
-    // La puntuación corresponde a las que estan en meta + su distancia + - las que estan en casa
+    // La puntuación corresponde a las que estan en meta + su distancia + seguras - las que estan en casa
     puntuacion = meta + distancia_meta + pieza_segura  - casa ;
 
     return puntuacion;
@@ -186,74 +187,74 @@ double AIPlayer::Puntos_Jugador(const Parchis &estado, int jugador){
     vector<double> puntuacion_color(2);
     double puntuacion = 0;
 
-
+    // Saco los colores del jugador y evaluo su puntación con la función anterior
     colores = estado.getPlayerColors(jugador);
     puntuacion_color[0] = Puntos_Color(estado, colores[0]);
     puntuacion_color[1] = Puntos_Color(estado, colores[1]);
 
 
-    // Dados especiales
+    // Valoro Dados especiales
     for (int j = 0; j < colores.size(); j++) {
 
         // Movimiento rapido
         if (estado.getPowerBar(j).getPower() >= 0 && estado.getPowerBar(j).getPower() < 50) {
 
-            puntuacion += 18;
+            puntuacion += 7 + (estado.getPowerBar(j).getPower() / 7);
         }
 
         // Concha roja
         if ((estado.getPowerBar(j).getPower() >= 50 && estado.getPowerBar(j).getPower() < 60) or 
             (estado.getPowerBar(j).getPower() >= 70 && estado.getPowerBar(j).getPower() < 75)) {
 
-            puntuacion += 8;
+            puntuacion += 10;
         }
 
         // Boom
         if (estado.getPowerBar(j).getPower() >= 60 && estado.getPowerBar(j).getPower() < 65) {
 
-            puntuacion -= 3;
+            puntuacion -= 5;
         }
 
         // Movimiento ultra rápido
         if (estado.getPowerBar(j).getPower() >= 65 && estado.getPowerBar(j).getPower() < 70) {
 
-            puntuacion += 23;
+            puntuacion += 25;
         }
 
         // Movimiento bala
         if (estado.getPowerBar(j).getPower() >= 75 && estado.getPowerBar(j).getPower() < 80) {
 
-            puntuacion += 28;
+            puntuacion += 40;
         }
 
         // Catapum
         if (estado.getPowerBar(j).getPower() >= 80 && estado.getPowerBar(j).getPower() < 85) {
 
-            puntuacion -= 8;
+            puntuacion -= 15;
         }
 
         // Concha azul
         if (estado.getPowerBar(j).getPower() >= 85 && estado.getPowerBar(j).getPower() < 90) {
 
-            puntuacion += 38;
+            puntuacion += 50;
         }
 
         // BoomBoom
         if (estado.getPowerBar(j).getPower() >= 90 && estado.getPowerBar(j).getPower() < 95) {
 
-            puntuacion -= 18;
+            puntuacion -= 20;
         }
 
         // Movimiento Estrella
         if (estado.getPowerBar(j).getPower() >= 95 && estado.getPowerBar(j).getPower() < 100) {
 
-            puntuacion += 48;
+            puntuacion += 60;
         }
 
         // Catapumchimpum
         if (estado.getPowerBar(j).getPower() >= 100) {
 
-            puntuacion -= 23;
+            puntuacion -= 30;
         }
     }
 
@@ -261,11 +262,11 @@ double AIPlayer::Puntos_Jugador(const Parchis &estado, int jugador){
     // Ponderación a cada color (si un color me da mas puntuación que otro lo evaluo mejor)
     if (puntuacion_color[0] > puntuacion_color[1]){
         
-        puntuacion += 2.0 * puntuacion_color[0] + 0.5 * puntuacion_color[1];
+        puntuacion += 2.5 * puntuacion_color[0] + 0.5 * puntuacion_color[1];
     
     } else {
         
-        puntuacion += 0.5 * puntuacion_color[0] + 2.0 * puntuacion_color[1];
+        puntuacion += 0.5 * puntuacion_color[0] + 2.5 * puntuacion_color[1];
     }
 
     return puntuacion;
