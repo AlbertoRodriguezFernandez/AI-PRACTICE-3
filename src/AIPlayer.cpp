@@ -103,7 +103,7 @@ double AIPlayer::ValoracionTest(const Parchis &estado, int jugador)
 
 
 // ***METODO QUE CALCULA LA PUNTUACIÓN POR CADA COLOR
-double AIPlayer::Puntos_Color(const Parchis &estado, color c){
+double AIPlayer::Puntos_Color(const Parchis &estado, color c) {
 
     double puntuacion = 0;
     const int NUM_CASILLAS_TOTALES = 72;
@@ -181,7 +181,7 @@ double AIPlayer::Puntos_Color(const Parchis &estado, color c){
 
 
 // ***METODO QUE CALCULA LOS PUNTOS DE CADA JUGADOR CON SU COLOR
-double AIPlayer::Puntos_Jugador(const Parchis &estado, int jugador){
+double AIPlayer::Puntos_Jugador(const Parchis &estado, int jugador) {
 
     vector<color> colores;
     vector<double> puntuacion_color(2);
