@@ -134,6 +134,26 @@ class AIPlayer: public Player{
          */
         static double ValoracionTest(const Parchis &estado, int jugador);
 
+        
+        /**
+         * @brief Método que calcula la puntuación de cada color
+         * 
+         * @param estado Instancia de Parchis con el estado actual de la partida.
+         * @param jugador Id del jugador actual (0 o 1)
+         * @return double 
+         */
+        static double Puntos_Color(const Parchis &estado, color c);
+
+
+        /**
+         * @brief Método que calcula la puntuación de cada jugador
+         * 
+         * @param estado Instancia de Parchis con el estado actual de la partida.
+         * @param jugador Id del jugador actual (0 o 1)
+         * @return double 
+         */
+        static double Puntos_Jugador(const Parchis &estado, int jugador);
+
 
         /**
          * @brief 1 Heurística 

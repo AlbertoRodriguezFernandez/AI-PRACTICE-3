@@ -102,8 +102,205 @@ double AIPlayer::ValoracionTest(const Parchis &estado, int jugador)
 }
 
 
-// ---TODO: MI HEURÍSTICA 1
+// ***METODO QUE CALCULA LA PUNTUACIÓN POR CADA COLOR
+double AIPlayer::Puntos_Color(const Parchis &estado, color c){
+
+    double puntuacion = 0;
+
+    
+    // Fichas en la meta (mayor puntuación cuanto más tenga)
+    double fichas_meta = estado.piecesAtGoal(c);
+    double meta;
+
+    if (fichas_meta == 0) {
+    
+        meta = 0;
+    
+    } else if (fichas_meta == 1) {
+
+        meta = 30;
+
+    } else if (fichas_meta == 2) {
+
+        meta = 35;
+
+    } else {
+
+        meta = 40;
+    }
+
+
+    // Fichas en casa (menor puntuación cuanto más tenga)
+    double fichas_casa = estado.piecesAtHome(c);
+    double casa;
+
+    if (fichas_casa == 0) {
+    
+        casa = 0;
+    
+    } else if (fichas_casa == 1) {
+
+        casa = 30;
+
+    } else if (fichas_casa == 2) {
+
+        casa = 35;
+
+    } else {
+
+        casa = 40;
+    }
+
+
+    // Distancia a meta
+    double distancia_meta = 0;
+
+    for(int i = 0; i < 3; i++){ // Tenemos 3 piezas
+
+        distancia_meta += 100 - estado.distanceToGoal(c,i);
+    }
+
+
+    // Pieza segura
+    double pieza_segura = 0;
+
+    for(int i = 0; i < 3; i++){ // Tenemos 3 piezas
+
+        if (estado.isSafePiece(c, i)) {
+
+            pieza_segura += 10;
+        }
+    }
+
+    // La puntuación corresponde a las que estan en meta + su distancia + - las que estan en casa
+    puntuacion = meta + distancia_meta + pieza_segura  - casa ;
+
+    return puntuacion;
+}
+
+
+// ***METODO QUE CALCULA LOS PUNTOS DE CADA JUGADOR CON SU COLOR
+double AIPlayer::Puntos_Jugador(const Parchis &estado, int jugador){
+
+    vector<color> colores;
+    vector<double> puntuacion_color(2);
+    double puntuacion = 0;
+
+
+    colores = estado.getPlayerColors(jugador);
+    puntuacion_color[0] = Puntos_Color(estado, colores[0]);
+    puntuacion_color[1] = Puntos_Color(estado, colores[1]);
+
+
+    // Dados especiales
+    for (int j = 0; j < colores.size(); j++) {
+
+        // Movimiento rapido
+        if (estado.getPowerBar(j).getPower() >= 0 && estado.getPowerBar(j).getPower() < 50) {
+
+            puntuacion += 18;
+        }
+
+        // Concha roja
+        if ((estado.getPowerBar(j).getPower() >= 50 && estado.getPowerBar(j).getPower() < 60) or 
+            (estado.getPowerBar(j).getPower() >= 70 && estado.getPowerBar(j).getPower() < 75)) {
+
+            puntuacion += 8;
+        }
+
+        // Boom
+        if (estado.getPowerBar(j).getPower() >= 60 && estado.getPowerBar(j).getPower() < 65) {
+
+            puntuacion -= 3;
+        }
+
+        // Movimiento ultra rápido
+        if (estado.getPowerBar(j).getPower() >= 65 && estado.getPowerBar(j).getPower() < 70) {
+
+            puntuacion += 23;
+        }
+
+        // Movimiento bala
+        if (estado.getPowerBar(j).getPower() >= 75 && estado.getPowerBar(j).getPower() < 80) {
+
+            puntuacion += 28;
+        }
+
+        // Catapum
+        if (estado.getPowerBar(j).getPower() >= 80 && estado.getPowerBar(j).getPower() < 85) {
+
+            puntuacion -= 8;
+        }
+
+        // Concha azul
+        if (estado.getPowerBar(j).getPower() >= 85 && estado.getPowerBar(j).getPower() < 90) {
+
+            puntuacion += 38;
+        }
+
+        // BoomBoom
+        if (estado.getPowerBar(j).getPower() >= 90 && estado.getPowerBar(j).getPower() < 95) {
+
+            puntuacion -= 18;
+        }
+
+        // Movimiento Estrella
+        if (estado.getPowerBar(j).getPower() >= 95 && estado.getPowerBar(j).getPower() < 100) {
+
+            puntuacion += 48;
+        }
+
+        // Catapumchimpum
+        if (estado.getPowerBar(j).getPower() >= 100) {
+
+            puntuacion -= 23;
+        }
+    }
+
+
+    // Ponderación a cada color (si un color me da mas puntuación que otro lo evaluo mejor)
+    if (puntuacion_color[0] > puntuacion_color[1]){
+        
+        puntuacion += 2.0 * puntuacion_color[0] + 0.5 * puntuacion_color[1];
+    
+    } else {
+        
+        puntuacion += 0.5 * puntuacion_color[0] + 2.0 * puntuacion_color[1];
+    }
+
+    return puntuacion;
+}
+
+
+// ***MI HEURISTICA 1
 double AIPlayer::MiValoracion1(const Parchis &estado, int jugador) {
+
+    int ganador = estado.getWinner();
+    int oponente = (jugador+1) % 2;
+
+    // Si hay un ganador, devuelvo más/menos infinito, según si he ganado yo o el oponente.
+    
+    if (ganador == jugador) {
+        
+        return gana;
+    
+    } else if (ganador == oponente) {
+        
+        return pierde;
+    
+    } else {
+        
+        double puntos_jugador = Puntos_Jugador(estado, jugador);
+        double puntos_oponente = Puntos_Jugador(estado, oponente);
+
+
+        return puntos_jugador - puntos_oponente;
+    }
+}
+
+
+// MI HEURÍSTICA 2
+double AIPlayer::MiValoracion2(const Parchis &estado, int jugador) {
 
     // Heurística 1
 
@@ -132,6 +329,10 @@ double AIPlayer::MiValoracion1(const Parchis &estado, int jugador) {
         // Colores que juega mi jugador y colores del oponente
         vector<color> my_colors = estado.getPlayerColors(jugador);
         vector<color> op_colors = estado.getPlayerColors(oponente);
+
+
+
+        // JUGADOR
 
         // Recorro todas las fichas de mi jugador
         int puntuacion_jugador = 0;
@@ -181,16 +382,79 @@ double AIPlayer::MiValoracion1(const Parchis &estado, int jugador) {
                     puntuacion_jugador++;
                 }
 
-                // Valoro positivamente si el numero de casillas en meta es >= 1
-                if (estado.piecesAtGoal(c) >= 1) {
+                // Valoro positivamente si el numero de casillas en meta 
+                if (estado.piecesAtGoal(c) == 0) {
+
+                    puntuacion_jugador--;
+                
+                } else if (estado.piecesAtGoal(c) == 1) {
+
+                    puntuacion_jugador += 3;
+
+                } else if (estado.piecesAtGoal(c) == 2) {
+
+                    puntuacion_jugador += 5;
+
+                } else {
 
                     puntuacion_jugador += 7;
+
                 }
 
-                // Valoro negativamente si el numero de casillas en meta es >= 1
-                if (estado.piecesAtHome(c) >= 1) {
+                // Valoro negativamente si el numero de casillas en casa
+                if (estado.piecesAtHome(c) == 0) {
+
+                    puntuacion_jugador++;
+                
+                } else if (estado.piecesAtHome(c) == 1) {
+
+                    puntuacion_jugador -= 3;
+
+                } else if (estado.piecesAtHome(c) == 2) {
+
+                    puntuacion_jugador -= 5;
+
+                } else {
 
                     puntuacion_jugador -= 7;
+
+                }
+
+                // Fichas Destruidas
+                vector<pair<color, int>> destruidas = estado.piecesDestroyedLastMove();
+                
+                for(int i = 0; i < destruidas.size(); i++){
+
+                    switch(destruidas[i].first){
+                        
+                        case red:
+                        case yellow:
+
+                            if(c == red or c == yellow){
+                                
+                                puntuacion_jugador -= 20;
+                           
+                            } else {
+                                
+                                puntuacion_jugador += 20;
+                            }
+
+                            break;
+                        
+                        case blue:
+                        case green:
+
+                            if(c == blue or c == green){
+                                
+                                puntuacion_jugador -= 20;
+                            
+                            } else {
+                                
+                                puntuacion_jugador += 20;
+                            }
+
+                            break;
+                    }
                 }
 
                 // Acciones dado especial
@@ -323,14 +587,15 @@ double AIPlayer::MiValoracion1(const Parchis &estado, int jugador) {
                 }
 
                 // Distancia
-                puntuacion_jugador += (72-estado.distanceToGoal(c,j));
+                puntuacion_jugador += 72 - estado.distanceToGoal(c,j);
+
             }
         }            
 
 
 
 
-
+        // OPONENTE
 
         // Recorro todas las fichas del oponente
         int puntuacion_oponente = 0;
@@ -380,16 +645,80 @@ double AIPlayer::MiValoracion1(const Parchis &estado, int jugador) {
                     puntuacion_oponente++;
                 }
 
-                // Valoro negativamente si el numero de casillas en meta es >= 1
-                if (estado.piecesAtGoal(c) >= 1) {
+               // Valoro positivamente si el numero de casillas en meta 
+                if (estado.piecesAtGoal(c) == 0) {
+
+                    puntuacion_oponente--;
+                
+                } else if (estado.piecesAtGoal(c) == 1) {
+
+                    puntuacion_oponente += 3;
+
+                } else if (estado.piecesAtGoal(c) == 2) {
+
+                    puntuacion_oponente += 5;
+
+                } else {
 
                     puntuacion_oponente += 7;
+
                 }
 
-                // Valoro negativamente si el numero de casillas en meta es >= 1
-                if (estado.piecesAtHome(c) >= 1) {
+                // Valoro negativamente si el numero de casillas en casa
+                if (estado.piecesAtHome(c) == 0) {
+
+                    puntuacion_oponente++;
+                
+                } else if (estado.piecesAtHome(c) == 1) {
+
+                    puntuacion_oponente -= 3;
+
+                } else if (estado.piecesAtHome(c) == 2) {
+
+                    puntuacion_oponente -= 5;
+
+                } else {
 
                     puntuacion_oponente -= 7;
+
+                }
+
+
+                // Fichas Destruidas
+                vector<pair<color, int>> destruidas = estado.piecesDestroyedLastMove();
+                
+                for(int i = 0; i < destruidas.size(); i++){
+
+                    switch(destruidas[i].first){
+                        
+                        case red:
+                        case yellow:
+
+                            if(c == red or c == yellow){
+                                
+                                puntuacion_oponente -= 20;
+                           
+                            } else {
+                                
+                                puntuacion_oponente += 20;
+                            }
+
+                            break;
+                        
+                        case blue:
+                        case green:
+
+                            if(c == blue or c == green){
+                                
+                                puntuacion_oponente -= 20;
+                            
+                            } else {
+                                
+                                puntuacion_oponente += 20;
+                            }
+
+                            break;
+                    }
                 }
 
                 // Acciones dado especial
@@ -443,6 +772,7 @@ double AIPlayer::MiValoracion1(const Parchis &estado, int jugador) {
 
                     puntuacion_oponente -= 28;
                 }
+
 
                 // Valoro positiva o negativamente el comer fichas
                 tuple<color, int, int> last_action = estado.getLastAction();       
@@ -521,8 +851,9 @@ double AIPlayer::MiValoracion1(const Parchis &estado, int jugador) {
                         break;
                 }
 
-                // Distancia
-                puntuacion_oponente += (72-estado.distanceToGoal(c,j));
+                // Distancia a la meta
+                puntuacion_oponente += 72 - estado.distanceToGoal(c,j);
+                
 
             }
         }
@@ -534,11 +865,7 @@ double AIPlayer::MiValoracion1(const Parchis &estado, int jugador) {
 }
 
 
-// ---POSIBLE TODO
-double AIPlayer::MiValoracion2(const Parchis &estado, int jugador) {}
-
-
-// ---TODO: ALGORITMO DE BÚSQUEDA
+// ALGORITMO DE BÚSQUEDA
 double AIPlayer::Poda_AlfaBeta(const Parchis &actual, int jugador, int profundidad, int profundidad_max, color &c_piece, int &id_piece, int &dice, double alpha, double beta, double (*heuristic)(const Parchis &, int)) const {
 
     // Controlar que pasa si llegamos a la profundidad maxima o ha terminado el juego
